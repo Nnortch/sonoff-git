@@ -180,7 +180,7 @@ int getHumidity() {
 }
 
 int getInfrared() {
-  return digitalRead(PIR_PIN);
+  return analogRead(PIR_PIN);
 }
 
 int getNoise() {
