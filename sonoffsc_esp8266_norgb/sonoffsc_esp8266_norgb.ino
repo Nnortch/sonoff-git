@@ -30,7 +30,7 @@ WiFiClient client;
 unsigned long LAST_TIMESTAMP_MICROGEAR_RECONNECT = 0;
 MicroGear microgear(client);
 
-String pmsg = "{\"temperature\":0, \"humidity\":0, \"light\":0, \"dust\":0, \"noise\":0}";
+String pmsg = "{\"temperature\":0, \"humidity\":0, \"light\":0, \"dust\":0, \"noise\":0, \"infrared\":0}";
 
 unsigned long LAST_TIMESTAMP_SENSOR = 0;
 unsigned long LAST_TIMESTAMP_CLAP = 0;
@@ -58,6 +58,8 @@ const PROGMEM char at_light[] = "AT+LIGHT";
 const PROGMEM char at_clap[] = "AT+CLAP";
 const PROGMEM char at_code[] = "AT+CODE";
 const PROGMEM char at_thld[] = "AT+THLD";
+const PROGMEM char at_led[] = "AT+LED";
+const PROGMEM char at_infrared[] = "AT+INFRA";
 
 // -----------------------------------------------------------------------------
 // VALUES
@@ -69,6 +71,7 @@ int light = 0;
 float dust = 0;
 int noise = 0;
 int clap = 0;
+int infrared = 0;
 //uint32 rgb;
 
 float getTemperature() { return temperature; }
@@ -76,7 +79,7 @@ float getHumidity() { return humidity; }
 float getLight() { return light; }
 float getDust() { return dust; }
 float getNoise() { return noise; }
-//uint32 getRGB() { return rgb; }
+float getInfrared() {return infrared;}
 
 //message string
 String m;                 // ตัวแปรเก็บข้อความชนิด string
@@ -173,6 +176,10 @@ bool commsSet(char * key, int value) {
         return true;
     }
 
+    if (strcmp_P(key, at_infrared) == 0){
+        infrared = value;
+        return true;
+    }
     return false;
 
 }
@@ -292,6 +299,7 @@ void sendSensor(){
   pmsg+=",\"light\":"+String(light);
   pmsg+=",\"dust\":"+String(dust);
   pmsg+=",\"noise\":"+String(noise);
+  pmsg+=",\"infrared\":"+String(infrared);
   pmsg+="}";
   Serial.println(pmsg);
   microgear.publish(NETPIE_TOPIC, pmsg);

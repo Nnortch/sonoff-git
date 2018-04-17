@@ -46,7 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define DHT_TYPE                DHT22
 #endif
 
-
+#define PIR_PIN  11 // can use 11-13
 
 #define ADC_COUNTS              1024
 #define MICROPHONE_PIN          A2
@@ -88,7 +88,8 @@ const PROGMEM char at_light[] = "AT+LIGHT";
 const PROGMEM char at_clap[] = "AT+CLAP";
 const PROGMEM char at_code[] = "AT+CODE";
 const PROGMEM char at_thld[] = "AT+THLD";
-
+const PROGMEM char at_led[] = "AT+LED";
+const PROGMEM char at_infrared[] = "AT+INFRA";
 
 // -----------------------------------------------------------------------------
 // Globals
@@ -119,7 +120,7 @@ int humidity;
 float dust;
 int light;
 int noise;
-
+int infrared;
 
 //unsigned int noise_count = 0;
 //unsigned long noise_sum = 0;
@@ -176,6 +177,10 @@ float getTemperature() {
 
 int getHumidity() {
     return dht.readHumidity();
+}
+
+int getInfrared() {
+  return digitalRead(PIR_PIN);
 }
 
 int getNoise() {
@@ -420,6 +425,12 @@ bool linkGet(char * key) {
         return true;
     }
 
+    if (strcmp_P(key, at_infrared) == 0) {
+        if (every == 0) infrared = getInfrared();
+        link.send(key, infrared, false);
+        return true;
+    }
+
     return false;
 
 }
@@ -491,12 +502,12 @@ void setup() {
 
 	// Setup physical pins on the ATMega328
     pinMode(LED_PIN, OUTPUT);
-	pinMode(LDR_PIN, INPUT);
+	  pinMode(LDR_PIN, INPUT);
     pinMode(DHT_PIN, INPUT);
     pinMode(SHARP_LED_PIN, OUTPUT);
     pinMode(SHARP_READ_PIN, INPUT);
     pinMode(MICROPHONE_PIN, INPUT_PULLUP);
-
+    pinMode(PIR_PIN,INPUT);
 
 	// Switch LED off (just to be sure)
     ledStatus(false);
@@ -540,7 +551,11 @@ void loop() {
 
         noise = getNoise();
         if (push) link.send_P(at_noise, noise, false);
+        
+        noiseLoop();
 
+        infrared = getInfrared();
+        if(push) link.send_P(at_infrared, infrared, false);
     }
 
     noiseLoop();
