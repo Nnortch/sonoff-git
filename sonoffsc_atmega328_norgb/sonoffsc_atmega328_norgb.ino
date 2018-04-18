@@ -120,7 +120,7 @@ int humidity;
 float dust;
 int light;
 int noise;
-int infrared;
+bool infrared;
 
 //unsigned int noise_count = 0;
 //unsigned long noise_sum = 0;
@@ -179,8 +179,8 @@ int getHumidity() {
     return dht.readHumidity();
 }
 
-int getInfrared() {
-  return analogRead(PIR_PIN);
+bool getInfrared() {
+  return digitalRead(PIR_PIN);
 }
 
 int getNoise() {
