@@ -1,0 +1,412 @@
+{
+ "version": "application/octet-stream",
+ "allow_edit": true,
+ "plugins": [],
+ "panes": [
+  {
+   "width": 1,
+   "row": {
+    "3": 11
+   },
+   "col": {
+    "3": 1
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "FeedView",
+     "settings": {
+      "title": "Temperature",
+      "datasource": "datasources[\"feedsonoffsc\"][\"data\"]",
+      "filter": "temperature",
+      "type": "line",
+      "color": "",
+      "marker": true,
+      "multipleaxis": true,
+      "autogap": false,
+      "height_block": "240",
+      "height": "4"
+     }
+    }
+   ]
+  },
+  {
+   "width": 1,
+   "row": {
+    "3": 21
+   },
+   "col": {
+    "3": 1
+   },
+   "col_width": "3",
+   "widgets": [
+    {
+     "type": "FeedView",
+     "settings": {
+      "datasource": "datasources[\"feedsonoffsc\"][\"data\"]",
+      "filter": "",
+      "type": "line",
+      "color": "",
+      "marker": true,
+      "multipleaxis": true,
+      "autogap": false,
+      "height_block": "240",
+      "height": "4"
+     }
+    }
+   ]
+  },
+  {
+   "title": "Humidity",
+   "width": 1,
+   "row": {
+    "3": 31,
+    "5": 11
+   },
+   "col": {
+    "3": 2,
+    "5": 2
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "gauge",
+     "settings": {
+      "value": "JSON.parse(datasources[\"dssonoffsc\"][\"/sonofftest3/data/sonoffsc\"]).humidity",
+      "units": "%",
+      "min_value": 0,
+      "max_value": 100
+     }
+    }
+   ]
+  },
+  {
+   "title": "Light",
+   "width": 1,
+   "row": {
+    "3": 31,
+    "5": 11
+   },
+   "col": {
+    "3": 3,
+    "5": 3
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "gauge",
+     "settings": {
+      "value": "JSON.parse(datasources[\"dssonoffsc\"][\"/sonofftest3/data/sonoffsc\"]).light",
+      "units": "%",
+      "min_value": 0,
+      "max_value": 100
+     }
+    }
+   ]
+  },
+  {
+   "title": "Temperature",
+   "width": 1,
+   "row": {
+    "3": 31,
+    "5": 19
+   },
+   "col": {
+    "3": 1,
+    "5": 1
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "gauge",
+     "settings": {
+      "value": "JSON.parse(datasources[\"dssonoffsc\"][\"/sonofftest3/data/sonoffsc\"]).temperature",
+      "units": "C",
+      "min_value": 0,
+      "max_value": 100
+     }
+    }
+   ]
+  },
+  {
+   "title": "Noise",
+   "width": 1,
+   "row": {
+    "3": 39,
+    "5": 19
+   },
+   "col": {
+    "3": 2,
+    "5": 2
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "gauge",
+     "settings": {
+      "value": "JSON.parse(datasources[\"dssonoffsc\"][\"/sonofftest3/data/sonoffsc\"]).noise",
+      "units": "%",
+      "min_value": 0,
+      "max_value": 100
+     }
+    }
+   ]
+  },
+  {
+   "title": "Dust",
+   "width": 1,
+   "row": {
+    "3": 39,
+    "5": 27
+   },
+   "col": {
+    "3": 1,
+    "5": 1
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "gauge",
+     "settings": {
+      "value": "JSON.parse(datasources[\"dssonoffsc\"][\"/sonofftest3/data/sonoffsc\"]).dust",
+      "units": "%",
+      "min_value": 0,
+      "max_value": 100
+     }
+    }
+   ]
+  },
+  {
+   "width": 1,
+   "row": {
+    "3": 39,
+    "5": 29
+   },
+   "col": {
+    "3": 3,
+    "5": 3
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "gauge",
+     "settings": {
+      "title": "Sound",
+      "value": "JSON.parse(datasources[\"dssonoffsc\"][\"/sonofftest3/data/sonoffsc\"]).sound",
+      "units": "%",
+      "min_value": 0,
+      "max_value": 100
+     }
+    }
+   ]
+  },
+  {
+   "title": "INFRARED",
+   "width": 1,
+   "row": {
+    "3": 47,
+    "5": 19
+   },
+   "col": {
+    "3": 1,
+    "5": 3
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "indicator",
+     "settings": {
+      "title": "Infrared",
+      "value": "JSON.parse(datasources[\"dssonoffsc\"][\"/sonofftest3/data/sonoffsc\"]).infrared"
+     }
+    }
+   ]
+  },
+  {
+   "title": "Device online",
+   "width": 1,
+   "row": {
+    "3": 51,
+    "5": 35
+   },
+   "col": {
+    "3": 1,
+    "5": 1
+   },
+   "col_width": "3",
+   "widgets": [
+    {
+     "type": "html",
+     "settings": {
+      "html": "var al = Object.keysJSON.parse(datasources[\"dssonoffsc\"][\"/sonofftest3/data/sonoffsc\"]);\n\nvar html=\"\";\nfor(var i=0; i<al.length; i++){\n    html+=\"<span style='font-size:24px;'>\"+(i+1)+\": \"+al[i]+\"</span><br>\";\n}\nreturn html;",
+      "height": 4
+     }
+    }
+   ]
+  },
+  {
+   "width": 1,
+   "row": {
+    "3": 1
+   },
+   "col": {
+    "3": 2
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "FeedView",
+     "settings": {
+      "title": "humidity",
+      "datasource": "datasources[\"feedsonoffsc\"][\"data\"]",
+      "filter": "humidity",
+      "type": "line",
+      "color": "yellow",
+      "marker": true,
+      "multipleaxis": true,
+      "autogap": false,
+      "height_block": "240",
+      "height": "4"
+     }
+    }
+   ]
+  },
+  {
+   "width": 1,
+   "row": {
+    "3": 1
+   },
+   "col": {
+    "3": 3
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "FeedView",
+     "settings": {
+      "title": "sound",
+      "datasource": "datasources[\"feedsonoffsc\"][\"data\"]",
+      "filter": "sound",
+      "type": "line",
+      "color": "blue",
+      "marker": true,
+      "multipleaxis": true,
+      "autogap": false,
+      "height_block": "240",
+      "height": "4"
+     }
+    }
+   ]
+  },
+  {
+   "width": 1,
+   "row": {
+    "3": 1
+   },
+   "col": {
+    "3": 1
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "FeedView",
+     "settings": {
+      "title": "light",
+      "datasource": "datasources[\"feedsonoffsc\"][\"data\"]",
+      "filter": "light",
+      "type": "line",
+      "color": "green",
+      "marker": true,
+      "multipleaxis": true,
+      "autogap": false,
+      "height_block": "240",
+      "height": "4"
+     }
+    }
+   ]
+  },
+  {
+   "width": 1,
+   "row": {
+    "3": 11
+   },
+   "col": {
+    "3": 2
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "FeedView",
+     "settings": {
+      "title": "infrared",
+      "datasource": "datasources[\"feedsonoffsc\"][\"data\"]",
+      "filter": "infrared",
+      "type": "line",
+      "color": "orange",
+      "marker": true,
+      "multipleaxis": true,
+      "autogap": false,
+      "height_block": "240",
+      "height": "4"
+     }
+    }
+   ]
+  },
+  {
+   "width": 1,
+   "row": {
+    "3": 11
+   },
+   "col": {
+    "3": 3
+   },
+   "col_width": 1,
+   "widgets": [
+    {
+     "type": "FeedView",
+     "settings": {
+      "title": "dust",
+      "datasource": "datasources[\"feedsonoffsc\"][\"data\"]",
+      "filter": "dust",
+      "type": "line",
+      "color": "white",
+      "marker": true,
+      "multipleaxis": true,
+      "autogap": false,
+      "height_block": "240",
+      "height": "4"
+     }
+    }
+   ]
+  }
+ ],
+ "datasources": [
+  {
+   "name": "dssonoffsc",
+   "type": "netpie_microgear",
+   "settings": {
+    "name": "dssonoffsc",
+    "appid": "sonofftest3",
+    "key": "jBXzGHLswY5QUa4",
+    "secret": "yCarf84OhRkVtWkobQOQdQoRC",
+    "topics": "/#"
+   }
+  },
+  {
+   "name": "feedsonoffsc",
+   "type": "netpie_feed",
+   "settings": {
+    "name": "feedsonoffsc",
+    "feedid": "sonotest5",
+    "apikey": "eX838HbamcfnnxPxLWuHcvDauLXGXy9N",
+    "granularity_value": "15",
+    "granularity_unit": "seconds",
+    "since_value": "1",
+    "since_unit": "hours",
+    "interval": "15"
+   }
+  }
+ ],
+ "columns": 3,
+ "theme": "default"
+}

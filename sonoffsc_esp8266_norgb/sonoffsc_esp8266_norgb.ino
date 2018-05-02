@@ -30,13 +30,13 @@ WiFiClient client;
 unsigned long LAST_TIMESTAMP_MICROGEAR_RECONNECT = 0;
 MicroGear microgear(client);
 
-String pmsg = "{\"temperature\":0, \"humidity\":0, \"light\":0, \"dust\":0, \"noise\":0, \"infrared\":0}";
+String pmsg = "{\"temperature\":0, \"humidity\":0, \"light\":0, \"dust\":0, \"sound\":0, \"infrared\":0}";
 
 unsigned long LAST_TIMESTAMP_SENSOR = 0;
-unsigned long LAST_TIMESTAMP_CLAP = 0;
+//unsigned long LAST_TIMESTAMP_CLAP = 0;
 unsigned long LAST_TIMESTAMP_FEED = 0;
 bool SEND_SENSOR_STATE = false;
-bool SEND_CLAP_STATE = false;
+//bool SEND_CLAP_STATE = false;
 bool MICROGEAR_STATE = false;
 
 /*
@@ -55,10 +55,11 @@ const PROGMEM char at_hum[] = "AT+HUM";
 const PROGMEM char at_dust[] = "AT+DUST";
 const PROGMEM char at_noise[] = "AT+NOISE";
 const PROGMEM char at_light[] = "AT+LIGHT";
-const PROGMEM char at_clap[] = "AT+CLAP";
+
 const PROGMEM char at_code[] = "AT+CODE";
-const PROGMEM char at_thld[] = "AT+THLD";
+
 const PROGMEM char at_led[] = "AT+LED";
+//const PROGMEM char at_sound[] = "AT+SOUND";
 const PROGMEM char at_infrared[] = "AT+INFRA";
 
 // -----------------------------------------------------------------------------
@@ -70,8 +71,9 @@ int humidity = 0;
 int light = 0;
 float dust = 0;
 int noise = 0;
-int clap = 0;
+//int clap = 0;
 int infrared = 0;
+int sound = 0;
 //uint32 rgb;
 
 float getTemperature() { return temperature; }
@@ -79,7 +81,8 @@ float getHumidity() { return humidity; }
 float getLight() { return light; }
 float getDust() { return dust; }
 float getNoise() { return noise; }
-float getInfrared() {return infrared;}
+//int getSound() { return sound; }
+bool getInfrared() {return infrared;}
 
 //message string
 String m;                 // ตัวแปรเก็บข้อความชนิด string
@@ -146,10 +149,10 @@ bool commsSet(char * key, int value) {
 
     char buffer[50];
 
-    if (strcmp_P(key, at_code) == 0) {
-        sendClap(value);
-        return true;
-    }
+//    if (strcmp_P(key, at_code) == 0) {
+//        sendClap(value);
+//        return true;
+//    }
 
     if (strcmp_P(key, at_temp) == 0) {
         temperature = (float) value / 10;
@@ -176,6 +179,11 @@ bool commsSet(char * key, int value) {
         return true;
     }
 
+//    if (strcmp_P(key, at_sound) == 0) {
+//        sound = value;
+//        return true;
+//    }
+    
     if (strcmp_P(key, at_infrared) == 0){
         infrared = value;
         return true;
@@ -186,7 +194,7 @@ bool commsSet(char * key, int value) {
 
 void commConfigure() {
     link.send_P(at_every, SENSOR_EVERY);
-    link.send_P(at_clap, SENSOR_CLAP_ENABLED == 1 ? 1 : 0);
+//    link.send_P(at_clap, SENSOR_CLAP_ENABLED == 1 ? 1 : 0);
 }
 
 void commsSetup() {
@@ -298,19 +306,21 @@ void sendSensor(){
   pmsg+=",\"humidity\":"+String(humidity);
   pmsg+=",\"light\":"+String(light);
   pmsg+=",\"dust\":"+String(dust);
-  pmsg+=",\"noise\":"+String(noise);
+//  pmsg+=",\"noise\":"+String(noise);
+  pmsg+=",\"sound\":"+String(noise);//edit sound->noise
   pmsg+=",\"infrared\":"+String(infrared);
   pmsg+="}";
+  Serial.print("Freeboard send -> ");
   Serial.println(pmsg);
   microgear.publish(NETPIE_TOPIC, pmsg);
 }
 
-void sendClap(int value){
-  clap = value;
-  Serial.print("clap: ");
-  Serial.println(clap);
-//  microgear.publish(NETPIE_TOPIC, pmsg);
-}
+//void sendClap(int value){
+//  clap = value;
+//  Serial.print("clap: ");
+//  Serial.println(clap);
+////  microgear.publish(NETPIE_TOPIC, pmsg);
+//}
 
 // -----------------------------------------------------------------------------
 // BOOTING
@@ -385,6 +395,8 @@ void loop() {
       if(millis()-LAST_TIMESTAMP_SENSOR >= NETPIE_INTERVAL_SEND) {
         if(LAST_TIMESTAMP_SENSOR!=0){
           sendSensor();
+          
+          
         }
         LAST_TIMESTAMP_SENSOR = millis();
       }
@@ -393,11 +405,11 @@ void loop() {
         if(LAST_TIMESTAMP_FEED!=0 && pmsg!="") {
           if(FEEDAPIKEY!="") microgear.writeFeed(FEEDID,pmsg,FEEDAPIKEY);
           else microgear.writeFeed(FEEDID,pmsg);
+          Serial.print("Feed send -> ");
+          Serial.println(pmsg);
         }
         LAST_TIMESTAMP_FEED = millis();
       }
-
-
       
     }else {
       Serial.println("Connection lost, reconnect...");

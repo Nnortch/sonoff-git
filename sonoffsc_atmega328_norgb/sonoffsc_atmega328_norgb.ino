@@ -48,30 +48,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define PIR_PIN  11 // can use 11-13
 
-#define ADC_COUNTS              1024
+#define ADC_COUNTS              1023
 #define MICROPHONE_PIN          A2
+#define PIR_PIN 11
+#define PIR_DEALAY_TIME 30000 //delay time PIR 30s
 
-//#define NOISE_READING_DELAY     100
+#define NOISE_READING_DELAY     100
 #define NOISE_READING_WINDOW    20
 #define NOISE_BUFFER_SIZE       20
 
-#define CLAP_DEBOUNCE_DELAY     150
-#define CLAP_TIMEOUT_DELAY      1000
-#define CLAP_SENSIBILITY        80
-#define CLAP_COUNT_TRIGGER      4
-#define CLAP_BUFFER_SIZE        7
-#define CLAP_TOLERANCE          1.50
+
 
 #define MAX_SERIAL_BUFFER       20
 
 #define DEFAULT_EVERY           60
 #define DEFAULT_PUSH            0
-#define DEFAULT_CLAP            0
+//#define DEFAULT_CLAP            0
 #define DEFAULT_THRESHOLD       0
-
-//#define RGB_WIPE				1
-//#define RGB_RAINBOW				2
-//#define RGB_RAINBOW_CYCLE		3
 
 // -----------------------------------------------------------------------------
 // Keywords
@@ -85,10 +78,11 @@ const PROGMEM char at_hum[] = "AT+HUM";
 const PROGMEM char at_dust[] = "AT+DUST";
 const PROGMEM char at_noise[] = "AT+NOISE";
 const PROGMEM char at_light[] = "AT+LIGHT";
-const PROGMEM char at_clap[] = "AT+CLAP";
+//const PROGMEM char at_clap[] = "AT+CLAP";
 const PROGMEM char at_code[] = "AT+CODE";
-const PROGMEM char at_thld[] = "AT+THLD";
+//const PROGMEM char at_thld[] = "AT+THLD";
 const PROGMEM char at_led[] = "AT+LED";
+const PROGMEM char at_sound[] = "AT+SOUND";
 const PROGMEM char at_infrared[] = "AT+INFRA";
 
 // -----------------------------------------------------------------------------
@@ -97,7 +91,7 @@ const PROGMEM char at_infrared[] = "AT+INFRA";
 
 SerialLink link(Serial);
 DHT dht(DHT_PIN, DHT_TYPE);
-int clapTimings[CLAP_BUFFER_SIZE];
+//int clapTimings[CLAP_BUFFER_SIZE];
 byte clapPointer = 0;
 
 // If push == false the slave waits for the master to request for values
@@ -109,10 +103,10 @@ byte clapPointer = 0;
 // If push == true and every == 0 messages are never sent.
 
 bool push = DEFAULT_PUSH;
-bool clap = DEFAULT_CLAP;
+//bool clap = DEFAULT_CLAP;
 unsigned long every = 1000 * DEFAULT_EVERY;
-unsigned int threshold = DEFAULT_THRESHOLD;
-unsigned long lastEffectTime = 0;
+//unsigned int threshold = DEFAULT_THRESHOLD;
+//unsigned long lastEffectTime = 0;
 
 
 float temperature;
@@ -120,13 +114,19 @@ int humidity;
 float dust;
 int light;
 int noise;
-bool infrared;
+//int sound;
+bool infrared, previous_infrared, p_status=0;
+unsigned long trigger =0;
 
-//unsigned int noise_count = 0;
-//unsigned long noise_sum = 0;
-//unsigned int noise_peak = 0;
-//unsigned int noise_min = 1024;
-//unsigned int noise_max = 0;
+
+////________smoothing____________
+//const int numReadings = 20;
+//int readings[numReadings];      // the readings from the analog input
+//int readIndex = 0;              // the index of the current reading
+//int total = 0;                  // the running total
+//int average = 0;                // the average
+
+
 
 unsigned int noise_buffer[NOISE_BUFFER_SIZE] = {0};
 unsigned int noise_buffer_pointer = 0;
@@ -180,7 +180,21 @@ int getHumidity() {
 }
 
 bool getInfrared() {
-  return digitalRead(PIR_PIN);
+  infrared = digitalRead(PIR_PIN);//read PIR
+        if(infrared == 0){
+          if(previous_infrared==1){
+             p_status = 1;
+              trigger = millis();
+          }
+          else if ((previous_infrared==0)&&(millis()-trigger < PIR_DEALAY_TIME)&&(trigger!=0)){p_status = 1;}
+          else if ((previous_infrared==0)&&(millis()-trigger >= PIR_DEALAY_TIME)){p_status = 0;}
+          else{p_status = 0;}
+        }
+        else{
+          p_status = 1;
+        }
+        previous_infrared = infrared;
+  return infrared;
 }
 
 int getNoise() {
@@ -191,123 +205,21 @@ int getNoise() {
 
         value = noise_buffer_sum / NOISE_BUFFER_SIZE;
 
-        //Serial.print("CNT : "); Serial.println(noise_count);
-        //Serial.print("SUM : "); Serial.println(noise_sum / noise_count);
-        //Serial.print("PEAK: "); Serial.println(noise_peak / noise_count);
-        //Serial.print("MAX : "); Serial.println(noise_max);
-        //Serial.print("MIN : "); Serial.println(noise_min);
-        //Serial.print("VAL : "); Serial.println(value);
-
-        //noise_count = 0;
-        //noise_sum = 0;
-        //noise_peak = 0;
-        //noise_min = ADC_COUNTS;
-        //noise_max = 0;
-
     //}
 
     return value;
 
 }
 
+//int getSound(){
+//  return average;
+//}
+
 // -----------------------------------------------------------------------------
 // MICrophone
 // -----------------------------------------------------------------------------
 
-void clapDecode() {
-//    Serial.print("at least 2 claps: ");
-//    Serial.println(clapPointer);
-    // at least 2 claps
-    if (clapPointer > 0) {
 
-        byte code = 2;
-        if (clapPointer > 1) {
-            int length = clapTimings[0] * CLAP_TOLERANCE;
-            for(byte i=1; i<clapPointer; i++) {
-                code <<= 1;
-                if (clapTimings[i] > length) code += 1;
-            }
-        }
-
-        link.send_P(at_code, code);
-
-    }
-
-    // reset
-    clapPointer = 0;
-
-}
-
-void clapRecord(int value) {
-
-    static bool reading = false;
-    static unsigned long last_clap;
-    static int counts = 0;
-    unsigned long current = millis();
-    unsigned long span = current - last_clap;
-
-    if (value > CLAP_SENSIBILITY) {
-        ++counts;
-    } else {
-        counts = 0;
-    }
-
-    if (counts == CLAP_COUNT_TRIGGER) {
-
-        // Is it the first clap?
-        if (!reading) {
-
-            last_clap = current;
-            reading = true;
-
-        // or not
-        } else {
-
-            //Serial.print("Span : "); Serial.println(span);
-
-            // timed out
-            if (span > CLAP_TIMEOUT_DELAY) {
-
-                clapDecode();
-
-                // reset
-                reading = false;
-
-            } else if (span < CLAP_DEBOUNCE_DELAY) {
-//                Serial.println("CLAP_DEBOUNCE_DELAY");
-                // do nothing
-
-            // new clap!
-            } else if (clapPointer < CLAP_BUFFER_SIZE) {
-//                Serial.println("new clap!");
-                clapTimings[clapPointer] = span;
-                last_clap = current;
-                clapPointer++;
-
-            // buffer overrun
-            } else {
-//                Serial.println("buffer overrun");
-                clapPointer = 0;
-                reading = false;
-            }
-
-        }
-
-    // check if we have to process it
-    } else if (reading) {
-
-        if (span > CLAP_TIMEOUT_DELAY) {
-
-            clapDecode();
-
-            // back to idle
-            reading = false;
-
-        }
-
-    }
-
-}
 
 void noiseLoop() {
 
@@ -338,28 +250,37 @@ void noiseLoop() {
 
     unsigned int peak = map(max - min, 0, ADC_COUNTS, 0, 100);
 //    Serial.println(peak);
-    if (clap) clapRecord(peak);
-
+//    if (clap) clapRecord(peak);
+//
     noise_buffer_sum = noise_buffer_sum + peak - noise_buffer[noise_buffer_pointer];
     noise_buffer[noise_buffer_pointer] = peak;
     noise_buffer_pointer = (noise_buffer_pointer + 1) % NOISE_BUFFER_SIZE;
 
-    //noise_peak += peak;
-    //if (max > noise_max) noise_max = max;
-    //if (min < noise_min) noise_min = min;
+//    //__________smoothing______________
+//    total = total - readings[readIndex];
+//    readings[readIndex] = peak;
+//    total = total + readings[readIndex];
+//    readIndex = readIndex + 1;
+//    if (readIndex >= numReadings) {
+//      // ...wrap around to the beginning:
+//      readIndex = 0;
+//    }
+//    average = total / numReadings;
 
-    if (threshold > 0) {
-        unsigned int value = noise_buffer_sum / NOISE_BUFFER_SIZE;
-        if (value > threshold) {
-            if (value > triggered) {
-                link.send_P(at_noise, value);
-                triggered = value;
-            }
-        } else if (triggered > 0) {
-            link.send_P(at_noise, value);
-            triggered = 0;
-        }
-    }
+//    if (threshold > 0) {
+//        unsigned int value = noise_buffer_sum / NOISE_BUFFER_SIZE;
+//        if (value > threshold) {
+//            if (value > triggered) {
+//                link.send_P(at_noise, value);
+//                triggered = value;
+//            }
+//        } else if (triggered > 0) {
+//            link.send_P(at_noise, value);
+//            triggered = 0;
+//        }
+//    }
+    
+      
 
 }
 
@@ -380,15 +301,7 @@ bool linkGet(char * key) {
         return true;
     }
 
-    if (strcmp_P(key, at_clap) == 0) {
-        link.send(key, clap ? 1 : 0, false);
-        return true;
-    }
 
-    if (strcmp_P(key, at_thld) == 0) {
-        link.send(key, threshold, false);
-        return true;
-    }
 
     if (strcmp_P(key, at_every) == 0) {
         link.send(key, every / 1000, false);
@@ -431,6 +344,12 @@ bool linkGet(char * key) {
         return true;
     }
 
+//    if (strcmp_P(key, at_sound) == 0) {
+//        if (every == 0) light = getSound();
+//        link.send(key, sound, false);
+//        return true;
+//    }
+    
     return false;
 
 }
@@ -446,12 +365,6 @@ bool linkSet(char * key, int value) {
         }
     }
 
-    if (strcmp_P(key, at_clap) == 0) {
-        if (0 <= value && value <= 1) {
-            clap = value == 1;
-            return true;
-        }
-    }
 
     if (strcmp_P(key, at_every) == 0) {
         if (5 <= value && value <= 300) {
@@ -460,12 +373,6 @@ bool linkSet(char * key, int value) {
         }
     }
 
-    if (strcmp_P(key, at_thld) == 0) {
-        if (0 <= value && value <= 100) {
-            threshold = value;
-            return true;
-        }
-    }
 
     if (strcmp_P(key, at_led) == 0) {
         if (0 <= value && value <= 1) {
@@ -531,31 +438,50 @@ void loop() {
 
         temperature = getTemperature();
         if (push) link.send_P(at_temp, 10 * temperature, false);
-
+        Serial.print("Temp:");
+        Serial.print(temperature);
+        
         noiseLoop();
 
         humidity = getHumidity();
         if (push) link.send_P(at_hum, humidity, false);
-
+        Serial.print(" Humi:");
+        Serial.print(humidity);
+        
         noiseLoop();
 
         dust = getDust();
         if (push) link.send_P(at_dust, 100 * dust, false);
+        Serial.print(" Dust:");
+        Serial.print(dust);
 
         noiseLoop();
 
         light = getLight();
         if (push) link.send_P(at_light, light, false);
-
-        noiseLoop();
-
-        noise = getNoise();
-        if (push) link.send_P(at_noise, noise, false);
-        
+        Serial.print(" Light:");
+        Serial.print(light);
+   
         noiseLoop();
 
         infrared = getInfrared();
         if(push) link.send_P(at_infrared, infrared, false);
+        Serial.print(" Infrared:");
+        Serial.println(infrared);
+        
+        noiseLoop();
+
+        noise = getNoise();
+        if (push) link.send_P(at_noise, noise, false);
+        Serial.print(" Noise:");
+        Serial.print(noise);
+        
+//        sound = getSound();
+//        if(push) link.send_P(at_sound, sound, false);
+//        Serial.print(" Sound:");
+//        Serial.println(sound);
+
+        
     }
 
     noiseLoop();
